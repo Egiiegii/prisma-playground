@@ -1,0 +1,70 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  name           String?
+  exchanges      Exchange[]
+  account_inventory AccountInventory[]
+  product        Product[]
+  comment        Comment[]
+  created_at     DateTime        @default(now()) @db.Timestamp()
+  updated_at     DateTime        @default(now()) @db.Timestamp()
+}
+
+model AccountInventory {
+  id         Int      @id @default(autoincrement())
+  account       Account     @relation(fields: [account_id], references: [id])
+  account_id    Int
+  created_at DateTime @default(now()) @db.Timestamp()
+  updated_at DateTime @default(now()) @db.Timestamp()
+}
+
+model Exchange {
+  id               Int            @id @default(autoincrement())
+  title            String
+  content          String?
+  offer_product_id String?
+  offer_product    Product?       @relation("offer_product_id", fields: [offer_product_id], references: [id])
+  wish_product_id  String?
+  wish_product     Product?       @relation("wish_product_id", fields: [wish_product_id], references: [id])
+  status           ExchangeStatus @default(CREATED)
+  account             Account           @relation(fields: [account_id], references: [id])
+  account_id          Int
+  comment          Comment[]
+  created_at       DateTime       @default(now()) @db.Timestamp()
+  updated_at       DateTime       @default(now()) @db.Timestamp()
+}
+
+model Comment {
+  id           Int      @id @default(autoincrement())
+  exchange_id  Int
+  exchange     Exchange @relation(fields: [exchange_id], references: [id])
+  commentor_id Int
+  commentor    Account     @relation(fields: [commentor_id], references: [id])
+  content      String?
+}
+
+model Product {
+  id              String     @id @unique
+  jan             String?     @unique
+  sig             String?     @unique
+  name            String
+  category        String?
+  created_account_id Int
+  created_by      Account       @relation(fields: [created_account_id], references: [id])
+  offer_exchange  Exchange[] @relation("offer_product_id")
+  wish_exchange   Exchange[] @relation("wish_product_id")
+  created_at      DateTime   @default(now()) @db.Timestamp()
+  updated_at      DateTime   @default(now()) @db.Timestamp()
+}
+
+enum ExchangeStatus {
+  CREATED
+  LOCKED
+  COMPLETE
+  CANCELLED
+}
